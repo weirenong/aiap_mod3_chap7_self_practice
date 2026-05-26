@@ -12,7 +12,7 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
 class DataPreparation:
     """
-    A class used to clean and preprocess HDB resale prices data.
+    A class used to clean and preprocess final test score data.
 
     Attributes:
     -----------
@@ -46,23 +46,31 @@ class DataPreparation:
         pd.DataFrame: The cleaned DataFrame.
         """
         logging.info("Starting data cleaning.")
-        df.drop_duplicates(inplace=True)
-        df["flat_type"].replace("FOUR ROOM", "4 ROOM", inplace=True)
-        df["lease_commence_date"] = df["lease_commence_date"].abs()
-        df["storey_range"] = df["storey_range"].apply(self._convert_storey_range)
-        df = self._fill_missing_names(df, "town_id", "town_name")
-        df = self._fill_missing_names(df, "flatm_id", "flatm_name")
-        df.drop(columns=["id", "town_id", "flatm_id"], inplace=True)
-        df["year_month"] = pd.to_datetime(df["month"], format="%Y-%m")
-        df["year"] = df["year_month"].dt.year
-        df["month"] = df["year_month"].dt.month
-        df.drop(columns=["year_month"], inplace=True)
-        df["remaining_lease_months"] = df["remaining_lease"].apply(
-            self._extract_lease_info
-        )
-        df.drop(columns=["remaining_lease", "block", "street_name"], inplace=True)
+        # Drop student id duplicates, opting to keep the assumed latest entry by using keep="last"
+        df_cleaned = df.sort_index()
+        df_cleaned = df.drop_duplicates(subset="student_id", keep="last")
+        logging.info(f"Shape after dropping duplicates: {df_cleaned.shape}")
+
+        # Drop rows with age less than 15, as they are likely to be data entry errors
+        df_cleaned = df_cleaned[df_cleaned["age"] >= 15]
+        logging.info(f"Shape after filtering by age: {df_cleaned.shape}")
+
+        # Fix NaN values for CCA
+        df_cleaned["CCA"].fillna("None", inplace=True)
+
+        # For attendance_rate NaN values, we can fill them with the average attendance rate for students with similar hours_per_week
+        df_cleaned['attendance_rate'] = self._fill_missing_attendance_rate(df_cleaned, 'attendance_rate')
+
+        # Fix inconsistent categorical/boolean values for CCA and tuition columns
+        df_cleaned['CCA'] = df_cleaned['CCA'].replace({'ARTS': 'Arts', 'SPORTS': 'Sports', 'CLUBS': 'Clubs', 'NONE': 'None'})
+        df_cleaned['tuition'] = df_cleaned['tuition'].replace({'Y': 'Yes', 'N': 'No'})
+
+        # Drop final_test_score rows with NaN values
+        df_cleaned.dropna(subset=["final_test"], inplace=True)
+        logging.info(f"Shape after dropping NaN values: {df_cleaned.shape}")
+        
         logging.info("Data cleaning completed.")
-        return df
+        return df_cleaned
 
     def _create_preprocessor(self) -> ColumnTransformer:
         """
@@ -74,25 +82,12 @@ class DataPreparation:
         """
         numerical_transformer = Pipeline(steps=[("scaler", StandardScaler())])
         nominal_transformer = Pipeline(
-            steps=[("onehot", OneHotEncoder(handle_unknown="ignore"))]
-        )
-        ordinal_transformer = Pipeline(
-            steps=[
-                (
-                    "ordinal",
-                    OrdinalEncoder(
-                        categories=[self.config["flat_type_categories"]],
-                        handle_unknown="use_encoded_value",
-                        unknown_value=-1,
-                    ),
-                )
-            ]
+            steps=[("onehot", OneHotEncoder(drop="first",handle_unknown="ignore"))]
         )
         preprocessor = ColumnTransformer(
             transformers=[
                 ("num", numerical_transformer, self.config["numerical_features"]),
                 ("nom", nominal_transformer, self.config["nominal_features"]),
-                ("ord", ordinal_transformer, self.config["ordinal_features"]),
                 ("pass", "passthrough", self.config["passthrough_features"]),
             ],
             remainder="passthrough",
@@ -101,75 +96,21 @@ class DataPreparation:
         return preprocessor
 
     @staticmethod
-    def _convert_storey_range(storey_range: str) -> float:
-        """
-        Converts a storey range string into its average numerical value.
-
-        Args:
-        -----
-        storey_range (str): A string representing a range of storeys, in the format 'XX TO YY'.
-
-        Returns:
-        --------
-        float: The average value of the two storeys in the range.
-        """
-        range_values = storey_range.split(" TO ")
-        return (int(range_values[0]) + int(range_values[1])) / 2
-
-    @staticmethod
-    def _fill_missing_names(
-        df: pd.DataFrame, id_column: str, name_column: str
+    def _fill_missing_attendance_rate(
+        df: pd.DataFrame, attendance_column: str
     ) -> pd.DataFrame:
         """
-        Fills missing values in the 'name_column' using the 'id_column'.
+        Fills missing values in the 'attendance_column' using the 'id_column'.
 
         Args:
         -----
         df (pd.DataFrame): The DataFrame containing the columns to be filled.
-        id_column (str): The name of the column containing the IDs.
-        name_column (str): The name of the column containing the names to be filled.
+        attendance_column (str): The name of the column containing the attendance rates to be filled.
 
         Returns:
         --------
-        pd.DataFrame: The DataFrame with missing values in 'name_column' filled.
+        pd.DataFrame: The DataFrame with missing values in 'attendance_column' filled.
         """
-        missing_names = df[name_column].isna()
-        name_mapping = (
-            df[[id_column, name_column]]
-            .dropna()
-            .drop_duplicates()
-            .set_index(id_column)[name_column]
-            .to_dict()
-        )
-        df.loc[missing_names, name_column] = df.loc[missing_names, id_column].map(
-            name_mapping
-        )
-        return df
-
-    @staticmethod
-    def _extract_lease_info(lease_str: str) -> int:
-        """
-        Converts lease information from a string format to total months.
-
-        Args:
-        -----
-        lease_str (str): The remaining lease period as a string.
-
-        Returns:
-        --------
-        int: The total number of months, or None if the input is NaN.
-        """
-        if pd.isna(lease_str):
-            return None
-        years_match = re.search(r"(\d+)\s*years?", lease_str)
-        months_match = re.search(r"(\d+)\s*months?", lease_str)
-        number_match = re.match(r"^\d+$", lease_str.strip())
-        if years_match:
-            years = int(years_match.group(1))
-        elif number_match:
-            years = int(number_match.group(0))
-        else:
-            years = 0
-        months = int(months_match.group(1)) if months_match else 0
-        total_months = years * 12 + months
-        return total_months
+        avg_attendance_by_hours = df.groupby('hours_per_week')['attendance_rate'].transform('mean')
+        df[attendance_column] = df[attendance_column].fillna(avg_attendance_by_hours)
+        return df[attendance_column]
