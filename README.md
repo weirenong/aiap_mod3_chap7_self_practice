@@ -205,19 +205,19 @@ Below is a comparison of the models evaluated in this project, including both ba
 #### Hyperparameter Tuned Models (After Grid Search)
 | Model              | Alpha | MAE   | MSE   | RMSE  | R²     |
 |--------------------|-------|-------|-------|-------|--------|
-| Ridge Regression   | 1     | 7.18  | 80.12 | 8.95  | 0.5501 |
-| Lasso Regression   | 0.01  | 7.20  | 80.50 | 8.97  | 0.5483 |
+| Ridge Regression   | 1     | 7.23  | 83.42 | 9.13  | 0.5456 |
+| Lasso Regression   | 0.01  | 7.22  | 83.34 | 9.13  | 0.5461 |
 
 ### Final Model Selection and Interpretation
 
-Based on the evaluation metrics, the best performing model was **Ridge Regression with alpha=1**. This model achieved the lowest MAE, MSE, and RMSE values, and the highest R² score among all evaluated models.
+Based on the evaluation metrics, the best performing model was **Lasso Regression with alpha=0.01**. This model achieved the lowest MAE, MSE, and RMSE values, and the highest R² score among all evaluated models.
 
 Key findings from the evaluation:
-1. **Ridge Regression consistently outperforms Linear and Lasso Regression** in terms of prediction accuracy (lower error metrics) and explanatory power (higher R²).
+1. **Lasso Regression consistently outperforms Linear and Ridge Regression** in terms of prediction accuracy (lower error metrics) and explanatory power (higher R²).
 2. **Hyperparameter tuning improved model performance**, particularly for Lasso Regression which showed a dramatic improvement in all metrics after tuning.
-3. **The model explains approximately 55% of the variance** in final test scores, which indicates a moderate level of predictive capability.
-4. **Average prediction error** is approximately 7.2 points on the final test score scale, which is a reasonable error for educational prediction tasks.
-5. **The best performing model (Ridge with alpha=1)** provides a good balance between low error rates and high explanatory power, making it the most reliable choice for predicting student final test scores.
+3. **The model explains approximately 54.6% of the variance** in final test scores, which indicates a moderate level of predictive capability.
+4. **Average prediction error** is approximately 7.22 points on the final test score scale, which is a reasonable error for educational prediction tasks.
+5. **The best performing model (Lasso with alpha=0.01)** provides a good balance between low error rates and high explanatory power, making it the most reliable choice for predicting student final test scores.
 
 The model's performance suggests that the selected features (direct admission, CCA, learning style, tuition, number of siblings, class size, sleep time, study hours, and attendance rate) have meaningful relationships with student performance, though there's still substantial variability not captured by the model.
 
