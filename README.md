@@ -18,16 +18,16 @@ This project implements a machine learning pipeline to predict final test scores
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/yourreponame.git
-cd hdb-resale-price-prediction
+git clone https://github.com/weirenong/aiap_mod3_chap7_self_practice.git
+cd aiap_mod3_chap7_self_practice
 
 ```
 
 
 2. Create and activate a conda environment:
 ```bash
-conda create -n hdbenv python=3.11
-conda activate hdbenv
+conda create -n aiapenv python=3.11
+conda activate aiapenv
 
 ```
 
@@ -70,7 +70,7 @@ The pipeline starts with loading configuration parameters from `src/config.yaml`
 
 * Data file path
 * Target column name
-* Feature categorization (numerical, nominal, ordinal)
+* Feature categorization (numerical, nominal)
 * Train/validation/test split ratios
 * Hyperparameter grid for model tuning
 
@@ -78,12 +78,13 @@ The pipeline starts with loading configuration parameters from `src/config.yaml`
 
 The `DataPreparation` class handles:
 
-* Removing duplicates
-* Standardizing flat type names
-* Converting storey ranges to numerical values
-* Remaining lease information is extracted and converted to total months because...
-* Year and month are extracted from the transaction date because...
-* Missing town and flat model names are filled using ID-to-name mappings because...
+* Removing duplicates by student id
+* Filling up NaN values for CCA with "None" value
+* Filling up NaN values for attendance rate by calculating the average attendance rate for students with similar hours per week values
+* Standardizing CCA and Tuition categorical/boolean names
+* Dropping rows with NaN final test scores
+* Converting sleep time to scalar values in minutes because the original data uses time format and it crosses over midnight causing the data to lose its natural ordering
+* Enforces dataframe to only contain columns for training, validation and testing
 * Creating a preprocessor for feature transformation
 
 ### 3. Model Training (`ModelTraining` class)
@@ -117,17 +118,16 @@ Before diving into the model training process, an exploratory data analysis (EDA
 
 ### Data Cleaning
 
-* Storey ranges are converted to their average values because...
-* Remaining lease information is extracted and converted to total months because...
-* Year and month are extracted from the transaction date because...
-* Missing town and flat model names are filled using ID-to-name mappings because...
+* Missing CCA categories are filled with None as it is assumed that correct categories will be used if it were present. There was existing data with None entered which means the missing data is likely to be None as well.
+* Missing attendance rate was filled by taking the average from the students with similar hours per week. It is assumed that attendance for classes contributes to hours per week hence we logically use this as an estimate for the missing values.
+* CCA and Tuition had inconsistent values that refer to the same thing so the data was standardised.
+* Sleep time was in time format and had to be converted to sleep time minutes because the time crossed over midnight and the data lost its order. Converting it to minutes preserves the order of time.
 
 ### Feature Processing
 
-* **Numerical Features:** `floor_area_sqm`, `remaining_lease_months`, `commence_date_year` used with `StandardScaler` because...
-* **Nominal Features:** `town_name`, `flat_name` encoded using `OneHotEncoder` because...
-* **Ordinal Features:** `flat_type` encoded using `OrdinalEncoder` with predefined categories because...
-* **Passthrough Features:** `storey_range` used as-is after converting to numerical values because...
+* **Numerical Features:** `n_male`, `n_female`, `sleep_time_mins`, `hours_per_week`, `attendance_rate` used with `StandardScaler` because these features have continuous numerical values that are on different scales.
+* **Nominal Features:** `CCA`, `direct_admission`, `learning_style`, `tuition` encoded using `OneHotEncoder` because these features are categorical and have no order.
+* **Passthrough Features:** `number_of_siblings` used as-is because it already represents an integer count with a natural, uniform numeric progression.
 
 ---
 
@@ -151,8 +151,8 @@ Before diving into the model training process, an exploratory data analysis (EDA
 
 ### Evaluation Metrics
 
-* **MAE (Mean Absolute Error):** Average absolute difference between predicted and actual prices because...
-* **MSE (Mean Squared Error):** Average squared difference between predicted and actual prices because...
+* **MAE (Mean Absolute Error):** Average absolute difference between predicted and actual final test score because...
+* **MSE (Mean Squared Error):** Average squared difference between predicted and actual final test score because...
 * **RMSE (Root Mean Squared Error):** Square root of MSE, in the same unit as the target because...
 * **$R^2$ (Coefficient of Determination):** Proportion of variance explained by the model because...
 
