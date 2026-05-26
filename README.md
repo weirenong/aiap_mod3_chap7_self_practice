@@ -120,6 +120,7 @@ The exploratory data analysis (EDA) revealed several important insights that gui
 ### Key Predictors of Final Test Scores
 
 **Strong Positive Predictors:**
+- **Direct admission**: Students that were admitted directly tend to achieve higher scores
 - **No CCA participation**: Students without co-curricular activities (CCA = None) tend to achieve higher scores
 - **Visual learning style**: Students with visual learning preferences outperform auditory learners
 - **Tuition attendance**: Students attending tuition show higher median scores
@@ -140,10 +141,9 @@ The following features were **excluded** from the final model training due to la
 |---------|----------------------|
 | **gender** | Perfectly balanced distribution with identical medians across categories |
 | **mode_of_transport** | All transport modes show identical distributions and performance metrics |
-| **bag_color** | Uniform distribution across all colors with no correlation to scores |
+| **bag_color** | Uniform distribution across all colors, no predictive value |
 | **age** | Scores evenly distributed between ages 15-16, no predictive value |
 | **wake_time** | No statistical relationship with final test scores |
-| **direct_admission** | Excluded to prevent potential data leakage (status may be determined by other features) |
 
 These exclusions were based on statistical analysis showing uniform distributions and identical performance metrics across feature categories, indicating no meaningful relationship with the target variable.
 
