@@ -68,6 +68,12 @@ class DataPreparation:
         # Drop final_test_score rows with NaN values
         df_cleaned.dropna(subset=["final_test"], inplace=True)
         logging.info(f"Shape after dropping NaN values: {df_cleaned.shape}")
+
+        # Convert sleep_time to scalar values in mins
+        df_cleaned['sleep_time_mins'] = self._add_sleep_time_scalar(df_cleaned, 'sleep_time')
+
+        # Ensure the cleaned DataFrame only contains the columns specified in the config for numerical, nominal, passthrough features, and the target column
+        df_cleaned = df_cleaned[[col for col in df_cleaned.columns if col in self.config["numerical_features"] + self.config["nominal_features"] + self.config["passthrough_features"] + [self.config["target_column"]]]]
         
         logging.info("Data cleaning completed.")
         return df_cleaned
@@ -100,7 +106,7 @@ class DataPreparation:
         df: pd.DataFrame, attendance_column: str
     ) -> pd.DataFrame:
         """
-        Fills missing values in the 'attendance_column' using the 'id_column'.
+        Fills missing values in the 'attendance_column'.
 
         Args:
         -----
@@ -114,3 +120,28 @@ class DataPreparation:
         avg_attendance_by_hours = df.groupby('hours_per_week')['attendance_rate'].transform('mean')
         df[attendance_column] = df[attendance_column].fillna(avg_attendance_by_hours)
         return df[attendance_column]
+    
+    @staticmethod
+    def _add_sleep_time_scalar(
+        df: pd.DataFrame, sleep_time_column: str
+    ) -> pd.DataFrame:
+        """
+        Converts sleep time values in the 'sleep_time_column' to scalar values in mins.
+
+        Args:
+        -----
+        df (pd.DataFrame): The DataFrame containing the columns to be filled.
+        sleep_time_column (str): The name of the column containing the sleep times to be converted.
+
+        Returns:
+        --------
+        pd.DataFrame: The DataFrame with converted sleep time values.
+        """
+        # Making sleep_time scalar, sleep_time_mins
+        df['sleep_time_mins'] = (
+            pd.to_datetime(df['sleep_time'], format='%H:%M')
+            .dt.hour * 60 + pd.to_datetime(df['sleep_time'], format='%H:%M')
+            .dt.minute)
+        # Adding minutes to sleep_time_mins for values less than 1280 (21 hours and 20 minutes) to account for students sleeping past midnight
+        df.loc[df['sleep_time_mins'] < 1260, 'sleep_time_mins'] += 1260
+        return df['sleep_time_mins']
