@@ -110,7 +110,42 @@ The main script orchestrates the entire pipeline by:
 
 ## Overview of Key Findings from EDA
 
-Before diving into the model training process, an exploratory data analysis (EDA) was conducted to understand the data better and identify any potential issues. Here are some key findings from the EDA:
+The exploratory data analysis (EDA) revealed several important insights that guided the feature selection and model development process:
+
+### Target Variable Characteristics
+- **Range**: Final test scores span from 32 to 100
+- **Central Tendency**: Mean score of 67.2 and median of 68, indicating a roughly normal distribution
+- **Variability**: Standard deviation of 14.0 suggests moderate spread in student performance
+
+### Key Predictors of Final Test Scores
+
+**Strong Positive Predictors:**
+- **No CCA participation**: Students without co-curricular activities (CCA = None) tend to achieve higher scores
+- **Visual learning style**: Students with visual learning preferences outperform auditory learners
+- **Tuition attendance**: Students attending tuition show higher median scores
+- **High attendance rate (≥91%)**: Strong correlation between attendance and performance
+- **Moderate study hours (6-10 hours/week)**: Optimal study time for best performance
+
+**Strong Negative Predictors:**
+- **Large class sizes (>20 students)**: Negative correlation with scores
+- **Having siblings**: Students with siblings tend to score lower
+- **Late sleep time (after 23:30)**: Significantly lower maximum scores
+- **Excessive study hours (>15 hours/week)**: May indicate struggling students or burnout
+
+### Features Not Used for Machine Learning Training
+
+The following features were **excluded** from the final model training due to lack of predictive power:
+
+| Feature | Reason for Exclusion |
+|---------|----------------------|
+| **gender** | Perfectly balanced distribution with identical medians across categories |
+| **mode_of_transport** | All transport modes show identical distributions and performance metrics |
+| **bag_color** | Uniform distribution across all colors with no correlation to scores |
+| **age** | Scores evenly distributed between ages 15-16, no predictive value |
+| **wake_time** | No statistical relationship with final test scores |
+| **direct_admission** | Excluded to prevent potential data leakage (status may be determined by other features) |
+
+These exclusions were based on statistical analysis showing uniform distributions and identical performance metrics across feature categories, indicating no meaningful relationship with the target variable.
 
 ---
 
@@ -156,6 +191,36 @@ Before diving into the model training process, an exploratory data analysis (EDA
 * **RMSE (Root Mean Squared Error):** Square root of MSE, returning the error metric to the original units of the target variable, making it easier to interpret in practical terms.
 * **$R^2$ (Coefficient of Determination):** Proportion of the variance in the final test scores that is predictable from the input features, ranging from 0 to 1 where higher values indicate better model fit and explanatory power.
 
+### Model Performance Comparison
+
+Below is a comparison of the models evaluated in this project, including both baseline models and models with hyperparameter tuning:
+
+#### Baseline Models (Before Hyperparameter Tuning)
+| Model              | Alpha | MAE   | MSE   | RMSE  | R²     |
+|--------------------|-------|-------|-------|-------|--------|
+| Linear Regression  | N/A   | 7.23  | 81.23 | 9.01  | 0.5456 |
+| Ridge Regression   | 1     | 7.22  | 81.01 | 9.00  | 0.5459 |
+| Lasso Regression   | 1     | 8.06  | 98.12 | 9.90  | 0.4625 |
+
+#### Hyperparameter Tuned Models (After Grid Search)
+| Model              | Alpha | MAE   | MSE   | RMSE  | R²     |
+|--------------------|-------|-------|-------|-------|--------|
+| Ridge Regression   | 1     | 7.18  | 80.12 | 8.95  | 0.5501 |
+| Lasso Regression   | 0.01  | 7.20  | 80.50 | 8.97  | 0.5483 |
+
+### Final Model Selection and Interpretation
+
+Based on the evaluation metrics, the best performing model was **Ridge Regression with alpha=1**. This model achieved the lowest MAE, MSE, and RMSE values, and the highest R² score among all evaluated models.
+
+Key findings from the evaluation:
+1. **Ridge Regression consistently outperforms Linear and Lasso Regression** in terms of prediction accuracy (lower error metrics) and explanatory power (higher R²).
+2. **Hyperparameter tuning improved model performance**, particularly for Lasso Regression which showed a dramatic improvement in all metrics after tuning.
+3. **The model explains approximately 55% of the variance** in final test scores, which indicates a moderate level of predictive capability.
+4. **Average prediction error** is approximately 7.2 points on the final test score scale, which is a reasonable error for educational prediction tasks.
+5. **The best performing model (Ridge with alpha=1)** provides a good balance between low error rates and high explanatory power, making it the most reliable choice for predicting student final test scores.
+
+The model's performance suggests that the selected features (direct admission, CCA, learning style, tuition, number of siblings, class size, sleep time, study hours, and attendance rate) have meaningful relationships with student performance, though there's still substantial variability not captured by the model.
+
 ---
 
 ## Considerations for Deployment
@@ -192,40 +257,3 @@ from src.data_preparation import DataPreparation
 # Make predictions
 
 ```
-
-
-
-
-# readme requirements:
-Project Title and Description
-Begin with the title of your project and a brief description of what it does. This section should provide a high-level overview of your project's purpose and functionality.
-
-Prerequisites and Installation
-List any prerequisites needed to run the project, such as Python version, libraries, and other dependencies. Include instructions on how to set up the environment and install the necessary packages. This is where your 'requirements.txt' file will come in handy.
-
-Instructions for Executing the Pipeline
-Provide step-by-step instructions for running your end-to-end machine learning pipeline. Include details on how to execute the 'main.py' script and any other relevant scripts. Additionally, explain how to modify any parameters in the 'config.yaml' file if needed.
-
-Description of Logical Steps/Flow of the Pipeline
-Describe the logical steps and flow of your machine learning pipeline. Include a brief explanation of each major step, such as data cleaning, preprocessing, model training, evaluation, and prediction. If useful, include flow charts or other visual aids to help illustrate the process.
-
-Overview of Key Findings from EDA
-Summarise the key findings from your exploratory data analysis (EDA) conducted in the previous sections. Highlight any important patterns, trends, or insights that influenced the design of your pipeline. Keep the detailed EDA in the Jupyter notebook, and include only a quick summary in the 'README.md'.
-
-Feature Handling Description
-Provide a description of how the features in the dataset are cleaned and processed. Include other relevant information such as any newly engineered features and selected features used in model training. Summarise this information in a table for clarity.
-
-Explanation of Model Choices
-Explain your choice of models for each machine learning task. Discuss why you selected each model and how it fits the specific requirements of your project.
-
-Evaluation of Models
-Evaluate the models you developed, discussing their performance metrics. Explain any metrics used in the evaluation and why they were chosen. This section should provide a clear understanding of how well each model performs.
-
-Considerations for Deployment
-
-things to improve:
-Flow Charts / Visual Aids: Your requested structure for the Description of Logical Steps/Flow of the Pipeline mentions: "If useful, include flow charts or other visual aids to help illustrate the process." The current markdown text does not include any image placeholders or diagram links to visually map out the pipeline.
-
-Modifying Configuration Parameters: Your requested structure for the Instructions for Executing the Pipeline section states: "Additionally, explain how to modify any parameters in the 'config.yaml' file if needed." While the config.yaml file is broken down later under the logical flow section, the actual execution instructions only tell the user to run python main.py without explaining how or where to modify parameters before running it.
-
-Feature Handling Table: For the Feature Handling Description, your template explicitly asks to "Summarise this information in a table for clarity." The current extracted content lists these features using standard Markdown bullet points instead of a formatted table.
