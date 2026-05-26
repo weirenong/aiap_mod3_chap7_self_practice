@@ -135,15 +135,15 @@ Before diving into the model training process, an exploratory data analysis (EDA
 
 ### Models Implemented and Justifications
 
-1. **Linear Regression:** Basic model without regularization because...
-2. **Ridge Regression:** Linear regression with L2 regularization because...
-3. **Lasso Regression:** Linear regression with L1 regularization because...
+1. **Linear Regression:** Basic model without regularization to establish a baseline performance and understand the relationship between features and the target variable.
+2. **Ridge Regression:** Linear regression with L2 regularization to prevent overfitting, especially useful when dealing with multicollinear features or when we have many features relative to the number of observations.
+3. **Lasso Regression:** Linear regression with L1 regularization to perform automatic feature selection by shrinking some coefficients to zero, helping to identify the most important predictors of final test scores.
 
 ### Hyperparameter Tuning
 
-* Grid search is performed for Ridge and Lasso models because...
-* Parameters tuned include `alpha` and `fit_intercept` because...
-* 5-fold cross-validation is used during tuning because...
+* Grid search is performed for Ridge and Lasso models to systematically explore different combinations of hyperparameters and identify the optimal configuration.
+* Parameters tuned include `alpha` (regularization strength) and `fit_intercept` (whether to calculate the intercept) to optimize model complexity and fit.
+* 5-fold cross-validation is used during tuning to ensure robust model selection by evaluating performance across multiple data splits and reducing the risk of overfitting to a particular train/validation split.
 
 ---
 
@@ -151,10 +151,10 @@ Before diving into the model training process, an exploratory data analysis (EDA
 
 ### Evaluation Metrics
 
-* **MAE (Mean Absolute Error):** Average absolute difference between predicted and actual final test score because...
-* **MSE (Mean Squared Error):** Average squared difference between predicted and actual final test score because...
-* **RMSE (Root Mean Squared Error):** Square root of MSE, in the same unit as the target because...
-* **$R^2$ (Coefficient of Determination):** Proportion of variance explained by the model because...
+* **MAE (Mean Absolute Error):** Average absolute difference between predicted and actual final test scores, providing an interpretable measure of average prediction error in the same units as the target variable.
+* **MSE (Mean Squared Error):** Average squared difference between predicted and actual values, which penalizes larger errors more heavily than smaller ones, making it sensitive to outliers.
+* **RMSE (Root Mean Squared Error):** Square root of MSE, returning the error metric to the original units of the target variable, making it easier to interpret in practical terms.
+* **$R^2$ (Coefficient of Determination):** Proportion of the variance in the final test scores that is predictable from the input features, ranging from 0 to 1 where higher values indicate better model fit and explanatory power.
 
 ---
 
